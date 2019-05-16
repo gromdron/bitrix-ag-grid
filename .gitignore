@@ -1,0 +1,12 @@
+### bitrix ###
+/upload/
+/bitrix/
+
+# Public
+/500.html
+
+# Env
+.env
+/.access.php
+/urlrewrite.php
+/web.config
