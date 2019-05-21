@@ -18,6 +18,7 @@ set_time_limit(0);
 try
 {
 	$client = \Fusion\Sheet\Client::get();
+	
 
 	$service = new \Google_Service_Sheets($client);
  
@@ -28,7 +29,7 @@ try
 
 	$rows = \Fusion\Sheet\DataTable::getList([
 		'filter' => [
-			'=IS_SYNCED' => 'Y'
+			'=IS_SYNCED' => 'N'
 		],
 		'limit' => 1000,
 	]);
@@ -42,13 +43,18 @@ try
 		]);
 	}
 
+	if ( count($requestBody)<1 )
+	{
+		throw new \Exception("All data is synced");
+	}
+
 	try
 	{
 		$response = $service->spreadsheets->batchUpdate(GS_SHEET_ID, $requestBody);
 	}
 	catch( \Exception $e )
 	{
-		var_dump($e);
+		var_dump($e->getMessage());
 	}
 
 	ob_start();
@@ -66,5 +72,5 @@ try
 }
 catch( \Exception $e )
 {
-	var_dump($e);
+	echo $e->getMessage().PHP_EOL;
 }
