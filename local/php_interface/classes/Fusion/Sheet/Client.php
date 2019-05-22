@@ -13,6 +13,11 @@ class Client
 	private function __wakeup()
 	{}
 
+	/**
+	 * Retunr google client with $params
+	 * @param array $params 
+	 * @return Google_Client
+	 */
 	public static function get( $params = [] )
 	{
 		$client = static::getBaseClient();
@@ -37,9 +42,9 @@ class Client
 			    $authUrl = $client->createAuthUrl();
 
 			    ob_start();
-			    echo "Token file {GS_TOKEN_LAST_AUTH} corrupted. You need visit: {$authUrl}";
-			    echo "Then open console and execute following script (replace #TOKEN# with goole auth code): ";
-			    echo '\\Fusion\\Sheet\\Client::fetchAccessToken("#TOKEN#");';
+			    echo "Token file {GS_TOKEN_LAST_AUTH} corrupted. You need visit: {$authUrl}".PHP_EOL;
+			    echo "Then open console and execute following script (replace #TOKEN# with goole auth code): ".PHP_EOL;
+			    echo '\\Fusion\\Sheet\\Client::fetchAccessToken("#TOKEN#");'.PHP_EOL;
 			    throw new \Exception( ob_get_clean() );
 			}
 

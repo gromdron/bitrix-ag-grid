@@ -12,6 +12,8 @@ BX.AgGrid = {
 
     options: {},
 
+    getRowsParams: {},
+
     init: function ( config )
     {
         this.container = config.container || 'agGridNodeContainer';
@@ -32,31 +34,45 @@ BX.AgGrid = {
         this.options.api.setServerSideDatasource(this);
 
         this.options.columnApi.autoSizeColumns();
+
+        BX.addCustomEvent('BX.Fusion.Sheet.Row::saveRow', BX.delegate(this.onSheetRowSave, this));
     },
 
     getRows: function( params )
     {
+        this.getRowsParams = params;
+
         BX.ajax.runComponentAction('fusion:sheet', 'getRows', {
             mode: 'class',
             data: {
-                params: params.request
+                params: this.getRowsParams.request
             }
         }).then(
-            BX.delegate(function(response){
-                if ( response.status == 'success' )
-                {
-                    params.successCallback(response.data.rows, response.data.lastRow);
-                }
-                else
-                {
-                    params.failCallback();
-                }
-            }, this),
-            BX.delegate(function(response){
-                console.log(params);
-                params.failCallback();
-            }, this)
+            BX.delegate(this.onGetRowsSuccess, this),
+            BX.delegate(this.onGetRowsFail, this)
         );
+    },
+
+    onGetRowsSuccess: function(response)
+    {
+        if ( response.status == 'success' )
+        {
+            this.getRowsParams.successCallback(response.data.rows, response.data.lastRow);
+        }
+        else
+        {
+            this.getRowsParams.failCallback();
+        }
+    },
+
+    onGetRowsFail: function(response)
+    {
+        this.getRowsParams.failCallback();
+    },
+
+    onSheetRowSave: function( field )
+    {
+        this.options.api.purgeServerSideCache();
     },
 
     locateText: function(key, defaultValue)

@@ -1,9 +1,13 @@
 <? if (! defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
 
+<? $this->SetViewTarget('pagetitle'); ?>
+    <button onclick='BX.Fusion.Sheet.Row.showAddRow();' class="ui-btn ui-btn-md ui-btn-success">Добавить строку</button>
+<? $this->EndViewTarget(); ?>
+
 <div 
 	id="myGrid" 
 	class="ag-theme-balham" 
-	style="width: 100%; height: 100%;"
+	style="width: 100%; height: 95%;"
 	></div>
 
 <script type="text/javascript">
@@ -11,30 +15,11 @@ BX.ready(function(){
 	window['agGridObject'] = BX.AgGrid.init(<?=CUtil::PhpToJSObject([
 		'container' => 'myGrid',
 		'options' => [
-			'columnDefs' => [
-				[
-					'headerName' => 'Make',
-					'field' => 'make',
-					'sortable' => true, 
-					'filter' => "agTextColumnFilter"
-				],
-				[
-					'headerName' => 'Model',
-					'field' => 'model',
-					'sortable' => true, 
-					'filter' => "agTextColumnFilter"
-				],
-				[
-					'headerName' => 'Price',
-					'field' => 'price',
-					'sortable' => true, 
-					'filter' => "agTextColumnFilter"
-				],
-			],
+			'columnDefs' => $arResult['COLUMNS'],
 
 			'rowModelType' => 'serverSide',
 
-			'domLayout' => 'autoHeight',
+			//'domLayout' => 'autoHeight',
 
 			'defaultColDef' => [
 				'editable' => true,
@@ -44,7 +29,7 @@ BX.ready(function(){
 			'multiSortKey' => 'ctrl',
 
 			"pagination" => true,
-			"paginationPageSize" => 10,
+			"paginationPageSize" => $arResult['PAGE_SIZE'],
 
 		]
 	])?>);

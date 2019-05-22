@@ -1,17 +1,21 @@
 <? if (! defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main;
+use \Bitrix\Rest;
+use \Fusion\Sheet;
+use \Fusion\AgGrid;
 use \Bitrix\Main\Engine;
 use \Bitrix\Main\Grid;
 use \Bitrix\Main\Context;
 use \Bitrix\Main\Search;
 
-use \Fusion\Sheet;
-
-class RequestListComponent 
+class SheetComponent 
 	extends \CBitrixComponent 
 	implements Engine\Contract\Controllerable
 {
+	protected static $letters = ['A','B','C','D','E','F'];
+
+	protected static $pageSize = 100;
 
 	public function configureActions()
 	{
@@ -28,40 +32,148 @@ class RequestListComponent
 	/**
 	 * Ajax component action group
 	 */
+
+
+	/**
+	 * Save row data
+	 * @param array $params 
+	 * @return boolean
+	 */
+	public function saveRowAction( $params )
+	{
+		$fields = [
+			'IS_SYNCED' => 'N'
+		];
+
+		$cells = [
+			'CELL_A',
+			'CELL_B',
+			'CELL_C',
+			'CELL_D',
+			'CELL_E',
+			'CELL_F',
+		];
+
+		foreach ($cells as $cellName)
+		{
+			if ( array_key_exists($cellName, $params) )
+			{
+				$fields[ $cellName ] = $params[ $cellName ];
+			}
+		}
+
+		if ( array_key_exists('ROW_NUMBER', $params) )
+		{
+			$fields['ROW_NUMBER'] = (int) $params['ROW_NUMBER'];
+		}
+
+		if ( empty($fields['ROW_NUMBER']) )
+		{
+			$fields['ROW_NUMBER'] = Sheet\Row::getLastRowNumber() + 1;
+
+			$saveResult = Sheet\DataTable::add($fields);
+		}
+		else
+		{
+			$saveResult = Sheet\DataTable::update($fields['ROW_NUMBER'], $fields);
+		}
+
+		if ( !$saveResult->isSuccess() )
+		{
+			throw new Rest\RestException( implode(', ', $saveResult->getErrorMessages()));
+		}
+
+		return true;
+	}
+
+	
 	public function getRowsAction( $params )
 	{
 		$data = [];
 
-		for ( $i = 0; $i < 50; $i++)
+		$oGridFilter = new AgGrid\Filter( $params['filterModel'] );
+
+		$order = $this->prepareSortModel( $params['sortModel'] );
+
+		$sheetData = Sheet\DataTable::getList([
+			'filter'      => $oGridFilter->getCompiledFilter(),
+			'order'       => $order,
+			'limit'       => $params['endRow'] + static::$pageSize,
+			'offset'      => $params['startRow'],
+			'count_total' => true,
+		]);
+
+
+		foreach ($sheetData as $row)
 		{
-			$data['rows'][] = [
-				'make'  => 'Toyota',
-				'model' => 'Celica',
-				'price' => '35000',
-			];
-
-			$data['rows'][] = [
-				'make'  => 'Ford',
-				'model' => 'Mondeo',
-				'price' => '32000',
-			];
-
-			$data['rows'][] = [
-				'make'  => 'Porsche',
-				'model' => 'Boxter',
-				'price' => '72000',
-			];
+			$data['rows'][] = (array) $row;
 		}
 
-		$data['lastRow'] = 150;
+		$data['lastRow'] = $sheetData->getCount();
 
 		return $data;
+	}
+
+	public function prepareFilter( $filterParams = [] )
+	{
+		$filter = [];
+
+		foreach ($filterParams as $cellCoord => $filterData)
+		{
+			$filterParams = [];
+
+			if ( !empty($filterData['operator']) )
+			{
+				$filterParams['LOGIC'] = strtoupper($filterData['operator']);
+
+				foreach ($filterData as $conditionId => $conditionValue)
+				{
+					
+			switch ($filterData['type'])
+			{
+				case 'notContains':
+					$filter['!%'.$cellCoord] = $filterData['filter'];
+					break;
+
+				case 'contains':
+					$filter['%'.$cellCoord] = $filterData['filter'];
+					break;
+				
+				default:
+					break;
+			}
+		}
+
+		return $filter;
+	}
+
+	public function parseCondition( $filterVars = [] )
+	{
+		$condition = [
+			'key'   => '',
+			'value' => '',
+		];
+
+		return $condition;
+	}
+
+	public function prepareSortModel( $sortModel = [] )
+	{
+		$order = [];
+
+		foreach ($sortModel as $sortParam)
+		{
+			$order[ $sortParam['colId'] ] = strtoupper($sortParam['sort']);
+		}
+
+		return $order;
 	}
 
 	public function loadExtensions()
 	{
 		Main\UI\Extension::load([
-			'ag.grid'
+			'fusion.sheet',
+			'ag.grid',
 		]);
 	}
 
@@ -70,6 +182,24 @@ class RequestListComponent
 		try
 		{
 			$this->loadExtensions();
+
+			$arResult = &$this->arResult;
+
+			foreach (static::$letters as $letter)
+			{
+				$arResult['COLUMNS'][] = [
+					'headerName' => $letter,
+					'field'      => 'CELL_'.$letter,
+					'sortable'   => true, 
+					'filter'     => "agTextColumnFilter",
+					'filterParams' => [
+						'apply' => true,
+						'newRowsAction' => 'keep',
+					],
+				];
+			}
+
+			$arResult['PAGE_SIZE'] = static::$pageSize;
 
 			$this->includeComponentTemplate();
 		}
