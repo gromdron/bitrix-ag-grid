@@ -30,6 +30,7 @@ class Filter
 		if ( !$this->filterCompiled )
 		{
 			$this->compile();
+			$this->filterCompiled = true;
 		}
 
 		return $this->compiledFilter;
@@ -80,8 +81,16 @@ class Filter
 
 		if ( count($this->compiledFilter) == 1 )
 		{
-			$this->compiledFilter = array_shift($this->compiledFilter);
+			$this->compiledFilter = (array) array_shift($this->compiledFilter);
 		}
+
+		//global $APPLICATION;
+
+		//$APPLICATION->RestartBuffer();
+		//echo "<pre>";
+		//var_dump($this->compiledFilter);
+		//echo "</pre>";
+		//die();
 	}
 
 	/**
@@ -97,8 +106,40 @@ class Filter
 			'value' => '',
 		];
 
-		$result['rule'] = $column;
-		$result['value'] = $condition['filter'];
+		switch ($condition['type'])
+		{
+			case 'startsWith':
+				$result['rule']  = $column;
+				$result['value'] = $condition['filter'].'%';
+				break;
+
+			case 'endsWith':
+				$result['rule']  = $column;
+				$result['value'] = '%'.$condition['filter'];
+				break;
+
+			case 'equals':
+				$result['rule']  = '='.$column;
+				$result['value'] = $condition['filter'];
+				break;
+
+			case 'notEqual':
+				$result['rule']  = '!='.$column;
+				$result['value'] = $condition['filter'];
+				break;
+
+			case 'contains':
+				$result['rule']  = '%'.$column;
+				$result['value'] = $condition['filter'];
+				break;
+
+			case 'notContains':
+				$result['rule']  = '!%'.$column;
+				$result['value'] = $condition['filter'];
+				break;
+			
+			default:break;
+		}
 
 		return $result;
 	}
