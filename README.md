@@ -11,8 +11,11 @@ GS_SHEET_ID - ID excel-файла в google
 GS_SHEET_NAME - название листа в excel
 </pre>
 
+5) Установить composer-зависимости
+Перейти в директорию /local/php_interface/ и выполнить composer init
+
 6) Создать таблицу Fusion\Sheet\DataTable
 
 <pre>\Fusion\Sheet\DataTable::getEntity()->createDBTable();</pre>
 
-5) Повестить скрипт на cron - /local/php_interface/console/gs_sync.php
+7) Повестить скрипт на cron - /local/php_interface/console/gs_sync.php
