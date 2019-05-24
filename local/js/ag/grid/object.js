@@ -35,8 +35,30 @@ BX.AgGrid = {
 
         this.options.columnApi.autoSizeColumns();
 
+        this.options.onCellValueChanged = BX.delegate(this.onCellValueChanged, this);
+
         BX.addCustomEvent('BX.Fusion.Sheet.Row::saveRow', BX.delegate(this.onSheetRowSave, this));
     },
+
+    onCellValueChanged: function (params)
+    {
+        BX.ajax.runComponentAction('fusion:sheet', 'saveRow', {
+            mode: 'class',
+            data: {
+                params: params.data
+            }
+        }).then(
+            BX.delegate(this.onCellValueChangedSuccess, this),
+            BX.delegate(BX.Fusion.Core.Utils.showError, this)
+        );
+    },
+
+    onCellValueChangedSuccess: function(response)
+    {
+
+    },
+
+
 
     getRows: function( params )
     {
