@@ -45,17 +45,10 @@ class SheetComponent
 			'IS_SYNCED' => 'N'
 		];
 
-		$cells = [
-			'CELL_A',
-			'CELL_B',
-			'CELL_C',
-			'CELL_D',
-			'CELL_E',
-			'CELL_F',
-		];
-
-		foreach ($cells as $cellName)
+		foreach (static::$letters as $cellName)
 		{
+			$cellName = 'CELL_'.$cellName;
+
 			if ( array_key_exists($cellName, $params) )
 			{
 				$fields[ $cellName ] = $params[ $cellName ];
@@ -86,7 +79,6 @@ class SheetComponent
 		return true;
 	}
 
-	
 	public function getRowsAction( $params )
 	{
 		$data = [];
@@ -103,7 +95,6 @@ class SheetComponent
 			'count_total' => true,
 		]);
 
-
 		foreach ($sheetData as $row)
 		{
 			$data['rows'][] = (array) $row;
@@ -112,49 +103,6 @@ class SheetComponent
 		$data['lastRow'] = $sheetData->getCount();
 
 		return $data;
-	}
-
-	public function prepareFilter( $filterParams = [] )
-	{
-		$filter = [];
-
-		foreach ($filterParams as $cellCoord => $filterData)
-		{
-			$filterParams = [];
-
-			if ( !empty($filterData['operator']) )
-			{
-				$filterParams['LOGIC'] = strtoupper($filterData['operator']);
-
-				foreach ($filterData as $conditionId => $conditionValue)
-				{
-					
-			switch ($filterData['type'])
-			{
-				case 'notContains':
-					$filter['!%'.$cellCoord] = $filterData['filter'];
-					break;
-
-				case 'contains':
-					$filter['%'.$cellCoord] = $filterData['filter'];
-					break;
-				
-				default:
-					break;
-			}
-		}
-
-		return $filter;
-	}
-
-	public function parseCondition( $filterVars = [] )
-	{
-		$condition = [
-			'key'   => '',
-			'value' => '',
-		];
-
-		return $condition;
 	}
 
 	public function prepareSortModel( $sortModel = [] )
