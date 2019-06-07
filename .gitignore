@@ -1,0 +1,14 @@
+### bitrix ###
+/upload/
+/bitrix/
+/local/php_interface/vendor/
+/local/php_interface/composer.lock
+
+# Public
+/500.html
+
+# Env
+.env
+/.access.php
+/urlrewrite.php
+/web.config
