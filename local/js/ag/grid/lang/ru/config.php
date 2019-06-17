@@ -66,7 +66,11 @@ $MESS['ag-grid-pivotColumnsEmptyMessage'] = 'Перетащите сюда дл�
 //$MESS['ag-grid-toolPanelButton'] = '';
 
 // other
-$MESS['ag-grid-noRowsToShow'] = 'нет данных';
+$MESS['ag-grid-noRowsToShow']   = 'нет данных';
+$MESS['ag-grid-export']         = 'Экспортировать';
+$MESS['ag-grid-csvExport']      = 'CSV';
+$MESS['ag-grid-excelXmlExport'] = 'Excel (.xml)';
+$MESS['ag-grid-excelExport']    = 'Excel (.xlsx)';
 
 // Standard menu
 $MESS['ag-grid-copy']            = 'копировать';
