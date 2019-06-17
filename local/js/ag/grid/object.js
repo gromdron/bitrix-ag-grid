@@ -95,6 +95,7 @@ BX.AgGrid = {
     onSheetRowSave: function( field )
     {
         this.options.api.purgeServerSideCache();
+        this.options.api.redrawRows();
     },
 
     locateText: function(key, defaultValue)
