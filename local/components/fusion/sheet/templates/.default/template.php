@@ -19,7 +19,7 @@ BX.ready(function(){
 
 			'rowModelType' => 'serverSide',
 
-			//'domLayout' => 'autoHeight',
+			'domLayout' => 'autoHeight',
 
 			'defaultColDef' => [
 				'editable' => true,
