@@ -81,7 +81,10 @@ class SheetComponent
 
 	public function getRowsAction( $params )
 	{
-		$data = [];
+		$data = [
+			'rows' => [],
+			'lastRow' => 0,
+		];
 
 		$oGridFilter = new AgGrid\Filter( $params['filterModel'] );
 
