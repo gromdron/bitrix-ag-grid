@@ -25,7 +25,7 @@ try
 	$sheetId  = GS_SHEET_ID;
 	$listName = GS_SHEET_NAME;
 
-	$requestBody = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest();
+	$requests = [];
 
 	$rows = \Fusion\Sheet\DataTable::getList([
 		'filter' => [
@@ -34,43 +34,97 @@ try
 		'limit' => 1000,
 	]);
 
-	foreach ($rows as $row)
+	foreach ($rows as $k => $row)
 	{
-		$requestBody[] = new Google_Service_Sheets_ValueRange([
-			'range' => $listName.'!A1',
+		$rowData = (array) $row;
+
+		unset($rowData['IS_SYNCED']);
+		unset($rowData['ROW_NUMBER']);
+
+		$rowData = array_values($rowData);
+
+		$requests[$k] = new Google_Service_Sheets_ValueRange([
+			'range' => $listName.'!A'.$row['ROW_NUMBER'],
 			'majorDimension' => 'ROWS',
 			'values' => ['values' => $rowData],
 		]);
 	}
 
-	if ( count($requestBody)<1 )
+	if ( count($requests)<1 )
 	{
 		throw new \Exception("All data is synced");
 	}
 
+	$requestBody = new Google_Service_Sheets_BatchUpdateValuesRequest();
+	$requestBody->setData($requests);
+	$requestBody->setValueInputOption('RAW');
+
 	try
 	{
-		$response = $service->spreadsheets->batchUpdate(GS_SHEET_ID, $requestBody);
+		$responses = $service->spreadsheets_values->batchUpdate(GS_SHEET_ID, $requestBody);
 	}
 	catch( \Exception $e )
 	{
-		var_dump($e->getMessage());
+		\CEventLog::Add([
+			"SEVERITY"      => "ERROR",
+			"AUDIT_TYPE_ID" => "SYNC_ERROR",
+			"MODULE_ID"     => "fusion.sheet",
+			"DESCRIPTION"   => $e->getMessage()
+		]);
+		return '';
 	}
 
-	ob_start();
-	echo "<pre>";
-	var_dump($response);
-	file_put_contents('/home/bitrix/wwww/gs_sync.txt', ob_get_clean(), FILE_APPEND);
+	foreach ($responses as $response)
+	{
+		if ( !preg_match_all('#Sheet1!A([0-9]+):F([0-9]+)#i', $response->getUpdatedRange(), $matches) )
+		{
+			continue;
+		}
 
+		$row = \Fusion\Sheet\DataTable::getRow([
+			'select' => ['ROW_NUMBER'],
+			'filter' => [
+				'=ROW_NUMBER' => $matches[1][0]
+			],
+		]);
 
-	//$service->spreadsheets_values->update(
-	//    $sheetId,
-	//    $listName.'!A1',
-	//    $updateBody,
-	//    ['valueInputOption' => 'USER_ENTERED']
-	//);
+		if ( !$row )
+		{
+			\CEventLog::Add([
+				"SEVERITY"      => "ERROR",
+				"AUDIT_TYPE_ID" => "SYNC_ERROR",
+				"MODULE_ID"     => "fusion.sheet",
+				'ITEM_ID'       => $response->getUpdatedRange(),
+				"DESCRIPTION"   => 'Updated row not found'
+			]);
+			continue;
+		}
+
+		$updatedFields = [
+			'IS_SYNCED' => 'Y'
+		];
+
+		$updateResult = \Fusion\Sheet\DataTable::update($row['ROW_NUMBER'], $updatedFields);
+
+		if ( !$updateResult->isSuccess() )
+		{
+			\CEventLog::Add([
+				"SEVERITY"      => "ERROR",
+				"AUDIT_TYPE_ID" => "SYNC_ERROR",
+				"MODULE_ID"     => "fusion.sheet",
+				'ITEM_ID'       => $row['ROW_NUMBER'],
+				"DESCRIPTION"   => implode(', ', $updateResult->getErrorMessages() )
+			]);
+			continue;
+		}
+	}
 }
 catch( \Exception $e )
 {
-	echo $e->getMessage().PHP_EOL;
+	\CEventLog::Add([
+		"SEVERITY"      => "ERROR",
+		"AUDIT_TYPE_ID" => "SYNC_ERROR",
+		"MODULE_ID"     => "fusion.sheet",
+		"DESCRIPTION"   => 'Google sync result: '.$e->getMessage()
+	]);
 }
