@@ -22,6 +22,8 @@ BX.AgGrid = {
 
         this.options = config.options;
 
+        this.options.getContextMenuItems = BX.delegate(this.getContextMenuItems,this);
+
         this.options.localeTextFunc = BX.delegate(this.locateText, this); 
 
         this.grid = new agGrid.Grid(
@@ -38,6 +40,32 @@ BX.AgGrid = {
         this.options.onCellValueChanged = BX.delegate(this.onCellValueChanged, this);
 
         BX.addCustomEvent('BX.Fusion.Sheet.Row::saveRow', BX.delegate(this.onSheetRowSave, this));
+    },
+
+    getContextMenuItems: function(params)
+    {
+        return [
+            {
+                name: 'Business process ',
+                action: BX.AgGrid.showRowBizProc( params.node.data['ROW_NUMBER'] ),
+            },
+            'separator',
+            'copy',
+            'copyWithHeaders',
+            'paste',
+            'separator',
+            'export'
+        ];
+    },
+
+    showRowBizProc( rowNumber )
+    {
+
+    },
+
+    onBusinessProcessRowClick: function (event)
+    {
+        console.log(event);
     },
 
     onCellValueChanged: function (params)
